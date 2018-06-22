@@ -1,25 +1,27 @@
 set -e
-function usage() {
-    echo -e "\033[32m $0 [OPTIONS]
-    -p platform. [centos7] TODO more platforms
-    -b branch. gpdb branch
-    \033[0m
-    "
-}
+
 function uniq_name(){
     echo `date '+%F-%H-%M-%S-%N'`
 }
+
 function pkg_name(){
     echo "gpdb-${BRANCH}-${PLATFORM}-cluster"
 }
+
+function get_nexus_url() {
+    echo "https://nexus.hengshi.org/content/repositories/releases/org/greenplum/gpdb/${BRANCH}/`pkg_name`.tar.gz"
+}
+
 function rename_if_exists(){
     if [ -e "$1" ];then
         mv "$1" "$1-bk-`uniq_name`"
     fi
 }
+
 function get_sys_info(){
     CPU_NUM=`cat /proc/cpuinfo |grep "cpu cores"|sort|uniq|awk '{print $4}'`
 }
+
 function copy_python_libs(){
     PY_DEST_DIR="$1"
     cp -r /usr/lib64/python2.7/site-packages/psutil* ${PY_DEST_DIR}/
@@ -71,7 +73,9 @@ function copy_python_libs(){
     cp -r /usr/lib64/python2.7/site-packages/python_gssapi* ${PY_DEST_DIR}/
     cp -r /usr/lib64/python2.7/site-packages/gssapi* ${PY_DEST_DIR}/
 }
+
 function build_centos7(){
+    # prepare build dir
     BUILD_ROOT="build-`uniq_name`"
     mkdir ${BUILD_ROOT}
     cd ${BUILD_ROOT}
@@ -81,7 +85,7 @@ function build_centos7(){
     mkdir ${INSTALL_DIR}/gpdb ${INSTALL_DIR}/sample-cluster
     mkdir ${INSTALL_DIR}/sample-cluster/conf ${INSTALL_DIR}/sample-cluster/data
     get_sys_info
-    # deps
+    # install deps
     if ! gcc --version;then
         sudo yum install gcc
     fi
@@ -113,10 +117,8 @@ function build_centos7(){
          openssh-clients openssh-server perl-JSON perl-Env xerces-c-devel xerces-c \
          perl-devel perl-ExtUtils-Embed readline readline-devel zlib-devel python-wrapt
     sudo ln -sf /usr/bin/cmake3 /usr/bin/cmake
-    # gpdb
-    git clone git@github.com:henglabs/gpdb.git
-    cd gpdb
-    git checkout ${BRANCH}
+    # build gpdb
+    cd ${SCRIPT_DIR}/../
     cd depends
     ./configure --prefix=${INSTALL_DIR}/gpdb
     make
@@ -126,7 +128,7 @@ function build_centos7(){
     make -j ${CPU_NUM}
     LD_LIBRARY_PATH=${BUILD_ROOT}/gpdb/depends/build/lib make install
     sed -i "1 s:^.*\$:GPHOME=/home/gpadmin/`pkg_name`/gpdb:" ${INSTALL_DIR}/gpdb/greenplum_path.sh
-    cd ..
+    cd ${BUILD_ROOT}
     cp /usr/lib64/libxerces-c.so /usr/lib64/libxerces-c-3.1.so ${INSTALL_DIR}/gpdb/lib
     copy_python_libs ${INSTALL_DIR}/gpdb/lib/python
     cat >${INSTALL_DIR}/sample-cluster/conf/hostfile <<eof
@@ -228,14 +230,29 @@ eof
     chmod +x ${INSTALL_DIR}/gpdb/bin/expand-cluster.sh
     tar -cvzf `pkg_name`.tar.gz `pkg_name`
 }
+
+function do_upload() {
+    cd ${BUILD_ROOT}
+    url=`get_nexus_url`
+    curl -v -udeployment:hengshi123 --upload-file `pkg_name`.tar.gz ${url}
+}
+
+function usage() {
+    echo -e "\033[32m $0 [OPTIONS]
+    -p platform. [centos7] TODO more platforms
+    -u upload nexus? [true|false]
+    \033[0m
+    "
+}
+
 function main() {
-    while getopts ":p:b:" opt; do
+    while getopts ":p:u:" opt; do
         case "$opt" in
             p)
                 PLATFORM="${OPTARG}"
                 ;;
-            b)
-                BRANCH="${OPTARG}"
+            u)
+                UPLOAD="${OPTARG}"
                 ;;
             *)
                 usage
@@ -245,12 +262,14 @@ function main() {
     done
 
     PLATFORM=${PLATFORM:-centos7}
-    BRANCH=${BRANCH:-5.3.0.1}
+    UPLOAD=${UPLOAD:-false}
     SCRIPT_DIR=`dirname $0`
     SCRIPT_DIR=$(cd ${SCRIPT_DIR};pwd)
+    BRANCH=$(cat ${SCRIPT_DIR}/tagname)
 
     echo -e "\033[32m ----------------------\033[0m"
     echo -e "\033[32m platform:             \033[0m" ${PLATFORM}
+    echo -e "\033[32m upload:               \033[0m" ${UPLOAD}
     echo -e "\033[32m branch:               \033[0m" ${BRANCH}
     echo -e "\033[32m script dir:           \033[0m" ${SCRIPT_DIR}
     echo -e "\033[32m ----------------------\033[0m"
@@ -266,6 +285,9 @@ function main() {
             exit 1
             ;;
     esac
+    if [ "${UPLOAD}" == "true" ];then
+        do_upload
+    fi
 }
 
 # ===== main =====
