@@ -124,9 +124,12 @@ function build_centos7(){
     make
     make install_local
     cd ..
-    LD_LIBRARY_PATH=${BUILD_ROOT}/gpdb/depends/build/lib ./configure --with-perl --with-python --with-libxml --with-gssapi --prefix=${INSTALL_DIR}/gpdb --with-libraries=${BUILD_ROOT}/gpdb/depends/build/lib --with-includes=${BUILD_ROOT}/gpdb/depends/build/include
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${INSTALL_DIR}/gpdb/lib
+    export LIBRARY_PATH=${LIBRARY_PATH}:${INSTALL_DIR}/gpdb/lib
+    export CPATH=${CPATH}:${INSTALL_DIR}/gpdb/include
+    ./configure --with-perl --with-python --with-libxml --with-gssapi --prefix=${INSTALL_DIR}/gpdb
     make -j ${CPU_NUM}
-    LD_LIBRARY_PATH=${BUILD_ROOT}/gpdb/depends/build/lib make install
+    make install
     sed -i "1 s:^.*\$:GPHOME=/home/gpadmin/`pkg_name`/gpdb:" ${INSTALL_DIR}/gpdb/greenplum_path.sh
     cd ${BUILD_ROOT}
     cp /usr/lib64/libxerces-c.so /usr/lib64/libxerces-c-3.1.so ${INSTALL_DIR}/gpdb/lib
