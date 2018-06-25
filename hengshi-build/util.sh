@@ -1,3 +1,4 @@
+HS_PREFIX="zzzz-hengshi-"
 function checkEnvAndPermission() {
   local file=$1
   if [ $# -ne 1 ];then
@@ -92,7 +93,9 @@ function updateSysConfig() {
     if [ -n "${line}" ];then
       rsync -avrzP -e ssh ${limitsConf} $line:${binRootDir}/limits.conf
       rsync -avrzP -e ssh ${sysctlConf} $line:${binRootDir}/sysctl.conf
-      ssh $line "cp /etc/security/limits.conf ${binRootDir}/limits.conf.bk.`date +%s`;cp /etc/sysctl.conf ${binRootDir}/sysctl.conf.bk.`date +%s`;sudo cp ${binRootDir}/limits.conf /etc/security/limits.conf;sudo cp ${binRootDir}/sysctl.conf /etc/sysctl.conf;sudo sysctl -p" </dev/null
+      remoteLimitsConf="/etc/security/limits.d/${HS_PREFIX}limits.conf"
+      remoteSysctlConf="/etc/sysctl.d/${HS_PREFIX}sysctl.conf"
+      ssh $line "if [ -f ${remoteLimitsConf} ];then cp ${remoteLimitsConf} ${binRootDir}/limits.conf.bk.`date +%s`; fi;if [ -f ${remoteSysctlConf} ];then cp ${remoteSysctlConf} ${binRootDir}/sysctl.conf.bk.`date +%s`; fi;sudo cp ${binRootDir}/limits.conf ${remoteLimitsConf};sudo cp ${binRootDir}/sysctl.conf ${remoteSysctlConf};sudo sysctl -p" </dev/null
     fi
   done<${file}
 }
@@ -109,16 +112,16 @@ function checkHostSysConfig() {
   # check sem
   sem=`cat /proc/sys/kernel/sem|awk '{print $1" "$2" "$3" "$4}'`
   if [ "${sem}" != "25000 204800000 25000 8192" ];then
-    echo "kernel.sem is not set properly, please check it manually"
+    echo "kernel.sem is not set properly, please check it manually in /etc/sysctl.conf and /etc/sysctl.d/*.conf"
     return 1
   fi
   # check limits
   if [ `getNoFileLimit` -lt 65536 ];then
-    echo "open files limit is not set properly, please check it manually"
+    echo "open files limit is not set properly, please check it manually in /etc/security/limits.conf and /etc/security/limits.d/*.conf"
     return 1
   fi
   if [ `getNProcLimit` -lt 131072 ];then
-    echo "max user processes is not set properly, please check it manually"
+    echo "max user processes is not set properly, please check it manually in /etc/security/limits.conf and /etc/security/limits.d/*.conf"
     return 1
   fi
 }
