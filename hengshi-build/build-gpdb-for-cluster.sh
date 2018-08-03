@@ -206,7 +206,7 @@ eof
 kernel.shmmax = 1000000000
 kernel.shmmni = 4096
 kernel.shmall = 4000000000
-kernel.sem = 25000 204800000 25000 8192
+kernel.sem = 250 2018500 100 8074
 kernel.sysrq = 1
 kernel.core_uses_pid = 1
 kernel.msgmnb = 65536
