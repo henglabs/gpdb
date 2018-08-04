@@ -95,7 +95,7 @@ function updateSysConfig() {
       rsync -avrzP -e ssh ${sysctlConf} $line:${binRootDir}/sysctl.conf
       remoteLimitsConf="/etc/security/limits.d/${HS_PREFIX}limits.conf"
       remoteSysctlConf="/etc/sysctl.d/${HS_PREFIX}sysctl.conf"
-      ssh $line "if [ -f ${remoteLimitsConf} ];then cp ${remoteLimitsConf} ${binRootDir}/limits.conf.bk.`date +%s`; fi;if [ -f ${remoteSysctlConf} ];then cp ${remoteSysctlConf} ${binRootDir}/sysctl.conf.bk.`date +%s`; fi;sudo cp ${binRootDir}/limits.conf ${remoteLimitsConf};sudo cp ${binRootDir}/sysctl.conf ${remoteSysctlConf};sudo sysctl -p" </dev/null
+      ssh $line "if [ -f ${remoteLimitsConf} ];then cp ${remoteLimitsConf} ${binRootDir}/limits.conf.bk.`date +%s`; fi;if [ -f ${remoteSysctlConf} ];then cp ${remoteSysctlConf} ${binRootDir}/sysctl.conf.bk.`date +%s`; fi;sudo cp ${binRootDir}/limits.conf ${remoteLimitsConf};sudo cp ${binRootDir}/sysctl.conf ${remoteSysctlConf};sudo sysctl --system" </dev/null
     fi
   done<${file}
 }
@@ -111,7 +111,7 @@ function getNProcLimit() {
 function checkHostSysConfig() {
   # check sem
   sem=`cat /proc/sys/kernel/sem|awk '{print $1" "$2" "$3" "$4}'`
-  if [ "${sem}" != "25000 204800000 25000 8192" ];then
+  if [ "${sem}" != "250 2018500 100 8074" ];then
     echo "kernel.sem is not set properly, please check it manually in /etc/sysctl.conf and /etc/sysctl.d/*.conf"
     return 1
   fi
@@ -145,7 +145,7 @@ function checkSysConfig() {
     if [ -n "${line}" ];then
       ok=`ssh $line "source ${binRootDir}/bin/util.sh;if checkHostSysConfig;then echo true;else echo false;fi" </dev/null`
       if [ "${ok}" != "true" ];then
-        echo "${line} checkHostSysConfig fail!"
+        echo "${line} checkHostSysConfig fail! ${ok}"
         return 1
       fi
     fi
