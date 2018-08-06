@@ -111,7 +111,12 @@ function getNProcLimit() {
 function checkHostSysConfig() {
   # check sem
   sem=`cat /proc/sys/kernel/sem|awk '{print $1" "$2" "$3" "$4}'`
+  semmsl=`cat /proc/sys/kernel/sem|awk '{print $1}'`
+  semmns=`cat /proc/sys/kernel/sem|awk '{print $2}'`
+  semopm=`cat /proc/sys/kernel/sem|awk '{print $3}'`
+  semmni=`cat /proc/sys/kernel/sem|awk '{print $4}'`
   if [ "${sem}" != "250 2018500 100 8074" ];then
+  if [ $semmsl -lt 250 ] || [ $semmns -lt 2018500 ] || [ $semopm -lt 100 ] || [ $semmni -lt 8074 ]; then
     echo "kernel.sem is not set properly, please check it manually in /etc/sysctl.conf and /etc/sysctl.d/*.conf"
     return 1
   fi
