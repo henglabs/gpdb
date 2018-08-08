@@ -3405,6 +3405,10 @@ do_to_timestamp(text *date_txt, text *fmt,
 #endif
 
 		date_str = text_to_cstring(date_txt);
+		if (date_str == NULL || date_str[0] == '\0') {
+		        SET_STATUS_FALSE(*status);
+			return;
+		}
 
 		DCH_from_char(format, date_str, &tmfc, status);
 		CHECK_STATUS(*status);
