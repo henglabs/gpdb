@@ -9,6 +9,12 @@ SEGMENT_NUM=0
 SEGMENT_BASE_PORT=25432
 MASTER_PORT=15432
 SEGMENT_HOSTS_FILE=""
+SNMP_MONITOR_ADDRESS="127.0.0.1:162"
+
+function paramSet() {
+  CLUSTER_PARAM_CONFIG=${CLUSTER_DIR}/conf/postgresql.conf
+  sed -i -e "s/gp_snmp_monitor_address=.*\$/gp_snmp_monitor_address='${SNMP_MONITOR_ADDRESS}'/" ${CLUSTER_PARAM_CONFIG}
+}
 
 function initEnv() {
   BIN_DIR=$(dirname $0)
@@ -78,6 +84,7 @@ function installMaster() {
 
 function doInstall() {
   installMaster
+  paramSet
   copyBin ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR})
   updateSysConfig ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR}) ${CLUSTER_DIR}/conf/limits.conf ${CLUSTER_DIR}/conf/sysctl.conf
 }
@@ -89,6 +96,7 @@ function usage() {
     -h file name of hosts of segments, one host in a line
     -p master port. default is ${MASTER_PORT}
     -s segment num. default is ${SEGMENT_NUM}
+    -m snmp monitor address. default is ${SNMP_MONITOR_ADDRESS}
     \033[0m
     "
 }
@@ -102,7 +110,7 @@ function checkMinimalOpts() {
 
 function main() {
   initEnv
-  while getopts ":b:d:h:p:s:" opt; do
+  while getopts ":b:d:h:p:s:m:" opt; do
     case "$opt" in
       b)
         SEGMENT_BASE_PORT="${OPTARG}"
@@ -119,6 +127,9 @@ function main() {
       s)
         SEGMENT_NUM="${OPTARG}"
         ;;
+      m)
+	SNMP_MONITOR_ADDRESS="${OPTARG}"
+	;;
       *)
         usage
         exit 1
