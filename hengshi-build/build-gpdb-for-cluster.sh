@@ -127,7 +127,7 @@ function build_centos7(){
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${INSTALL_DIR}/gpdb/lib
     export LIBRARY_PATH=${LIBRARY_PATH}:${INSTALL_DIR}/gpdb/lib
     export CPATH=${CPATH}:${INSTALL_DIR}/gpdb/include
-    ./configure --with-perl --with-python --with-libxml --with-gssapi --prefix=${INSTALL_DIR}/gpdb
+    ./configure --enable-snmp --with-perl --with-python --with-libxml --with-gssapi --prefix=${INSTALL_DIR}/gpdb
     make -j ${CPU_NUM}
     make install
     sed -i "1 s:^.*\$:GPHOME=/home/gpadmin/`pkg_name`/gpdb:" ${INSTALL_DIR}/gpdb/greenplum_path.sh
