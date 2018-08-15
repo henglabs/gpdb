@@ -140,7 +140,7 @@ eof
 
     cat >${INSTALL_DIR}/sample-cluster/conf/postgresql.conf <<eof
 # name or IP address(es) (and optionally the port) of the SNMP monitor(s) that will receive the alerts.
-gp_snmp_monitor_address='127.0.0.1:162'
+gp_snmp_monitor_address='127.0.0.1:1620'
 # Change to whatever community string you use in your monitor
 gp_snmp_community='public'
 # Set to 'inform' or 'trap', we will send SNMP v2c inform, or SNMP v2c trap.
