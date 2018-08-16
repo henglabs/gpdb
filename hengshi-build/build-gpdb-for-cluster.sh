@@ -83,7 +83,7 @@ function build_centos7(){
     INSTALL_DIR=`pwd`/`pkg_name`
     mkdir ${INSTALL_DIR}
     mkdir ${INSTALL_DIR}/gpdb ${INSTALL_DIR}/sample-cluster
-    mkdir ${INSTALL_DIR}/sample-cluster/conf ${INSTALL_DIR}/sample-cluster/data
+    mkdir ${INSTALL_DIR}/sample-cluster/conf ${INSTALL_DIR}/sample-cluster/data ${INSTALL_DIR}/sample-cluster/mirror
     get_sys_info
     # install deps
     if ! gcc --version;then
@@ -175,6 +175,18 @@ MASTER_HOSTNAME=localhost
 MASTER_DIRECTORY=/home/gpadmin/`pkg_name`/sample-cluster/data
 
 MASTER_PORT=15432
+
+#mirror segment port numbers
+MIRROR_PORT_BASE=
+
+#specifies the base number by which the port numbers for the primary file replication process are calculated
+REPLICATION_PORT_BASE=
+
+#specifies the data storage location(s) where the utility will create the mirror segment data directories
+declare -a MIRROR_DATA_DIRECTORY=
+
+#specifies the base number by which the port numbers for the mirror file replication process are calculated
+MIRROR_REPLICATION_PORT_BASE=
 
 # Hosts to allow to connect to the QD (and Segment Instances)
 # By default, allow everyone to connect (0.0.0.0/0)

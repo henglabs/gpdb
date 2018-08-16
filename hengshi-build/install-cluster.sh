@@ -10,6 +10,7 @@ SEGMENT_BASE_PORT=25432
 MASTER_PORT=15432
 SEGMENT_HOSTS_FILE=""
 SNMP_MONITOR_ADDRESS="127.0.0.1:1620"
+MIRROR_BASE_PORT=""
 
 function paramSet() {
   CLUSTER_PARAM_CONFIG=${CLUSTER_DIR}/conf/postgresql.conf
@@ -82,10 +83,32 @@ function installMaster() {
   sed -i -e "s:^MASTER_PORT=.*\$:MASTER_PORT=${MASTER_PORT}:" ${CLUSTER_CONFIG_FILE}
 }
 
+function installMirror() {
+  ONE_MIR_DIR="${CLUSTER_DIR}/mirror"
+  MIRROR_DIRS="${ONE_MIR_DIR}"
+  if [ ${SEGMENT_NUM} -ge 2 ];then
+    for i in $(seq 2 ${SEGMENT_NUM});do
+      MIRROR_DIRS="${MIRROR_DIRS} ${ONE_MIR_DIR}"
+    done
+  fi
+  sed -i -e "s:^MIRROR_PORT_BASE=.*\$:MIRROR_PORT_BASE=${MIRROR_BASE_PORT}:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^REPLICATION_PORT_BASE=.*\$:REPLICATION_PORT_BASE=41000:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^MIRROR_REPLICATION_PORT_BASE=.*\$:MIRROR_REPLICATION_PORT_BASE=51000:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^.*declare -a MIRROR_DATA_DIRECTORY=.*\$:declare -a MIRROR_DATA_DIRECTORY=(${MIRROR_DIRS}):" ${CLUSTER_CONFIG_FILE}
+}
+
+function checkMirrorOpts() {
+  if [ -n "${MIRROR_BASE_PORT}" ];then
+    installMirror
+  fi
+}
+
 function doInstall() {
   installMaster
+  checkMirrorOpts
   paramSet
   copyBin ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR})
+  copyBin ${SEGMENT_HOSTS_FILE} ${CLUSTER_DIR}
   updateSysConfig ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR}) ${CLUSTER_DIR}/conf/limits.conf ${CLUSTER_DIR}/conf/sysctl.conf
 }
 
@@ -97,6 +120,7 @@ function usage() {
     -p master port. default is ${MASTER_PORT}
     -s segment num. default is ${SEGMENT_NUM}
     -m snmp monitor address. default is ${SNMP_MONITOR_ADDRESS}
+    -r mirror base port. if empty, mirror will not be installed.
     \033[0m
     "
 }
@@ -110,7 +134,7 @@ function checkMinimalOpts() {
 
 function main() {
   initEnv
-  while getopts ":b:d:h:p:s:m:" opt; do
+  while getopts ":b:d:h:p:s:m:r:" opt; do
     case "$opt" in
       b)
         SEGMENT_BASE_PORT="${OPTARG}"
@@ -129,6 +153,9 @@ function main() {
         ;;
       m)
 	SNMP_MONITOR_ADDRESS="${OPTARG}"
+	;;
+      r)
+	MIRROR_BASE_PORT="${OPTARG}"
 	;;
       *)
         usage
