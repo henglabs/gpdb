@@ -10,7 +10,7 @@ SEGMENT_BASE_PORT=25432
 MASTER_PORT=15432
 SEGMENT_HOSTS_FILE=""
 SNMP_MONITOR_ADDRESS="127.0.0.1:1620"
-MIRROR_BASE_PORT=""
+MIRROR_BASE_PORT="35432"
 
 function paramSet() {
   CLUSTER_PARAM_CONFIG=${CLUSTER_DIR}/conf/postgresql.conf
@@ -98,7 +98,7 @@ function installMirror() {
 }
 
 function checkMirrorOpts() {
-  if [ -n "${MIRROR_BASE_PORT}" ];then
+  if [ "on" = "${MIRROR_ON_OFF}" ];then
     installMirror
   fi
 }
@@ -120,7 +120,8 @@ function usage() {
     -p master port. default is ${MASTER_PORT}
     -s segment num. default is ${SEGMENT_NUM}
     -m snmp monitor address. default is ${SNMP_MONITOR_ADDRESS}
-    -r mirror base port. if empty, mirror will not be installed.
+    -f when f is "on",mirror is on,else mirror is off
+    -r mirror base port. default is ${MIRROR_BASE_PORT}
     \033[0m
     "
 }
@@ -134,7 +135,7 @@ function checkMinimalOpts() {
 
 function main() {
   initEnv
-  while getopts ":b:d:h:p:s:m:r:" opt; do
+  while getopts ":b:d:h:p:s:m:r:f:" opt; do
     case "$opt" in
       b)
         SEGMENT_BASE_PORT="${OPTARG}"
@@ -156,6 +157,9 @@ function main() {
 	;;
       r)
 	MIRROR_BASE_PORT="${OPTARG}"
+	;;
+      f)
+	MIRROR_ON_OFF="${OPTARG}"
 	;;
       *)
         usage
