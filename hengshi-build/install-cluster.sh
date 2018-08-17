@@ -78,11 +78,11 @@ function installMaster() {
   sed -i -e "s:${DEFAULT_PKG_ROOT}/gpdb/greenplum_path.sh:${PKG_ROOT}/gpdb/greenplum_path.sh:g" ${CLUSTER_EXPORT_FILE}
   sed -i -e "s:^export PGPORT=.*\$:export PGPORT=${MASTER_PORT}:" ${CLUSTER_EXPORT_FILE}
   sed -i -e "s:${DEFAULT_PKG_ROOT}/sample-cluster:${CLUSTER_DIR}:g" ${CLUSTER_EXPORT_FILE} ${CLUSTER_CONFIG_FILE}
-  sed -i -e "s:^.*declare -a DATA_DIRECTORY=.*\$:declare -a DATA_DIRECTORY=(${DATA_DIRS}):" ${CLUSTER_CONFIG_FILE}
-  sed -i -e "s:^.*MASTER_HOSTNAME=.*\$:MASTER_HOSTNAME=$(hostname):" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#declare -a DATA_DIRECTORY=.*\$:declare -a DATA_DIRECTORY=(${DATA_DIRS}):" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#MASTER_HOSTNAME=.*\$:MASTER_HOSTNAME=$(hostname):" ${CLUSTER_CONFIG_FILE}
   sed -i -e "s:^#PORT_BASE=.*\$:PORT_BASE=${SEGMENT_BASE_PORT}:" ${CLUSTER_CONFIG_FILE}
-  sed -i -e "s:^.*MASTER_PORT=.*\$:MASTER_PORT=${MASTER_PORT}:" ${CLUSTER_CONFIG_FILE}
-  sed -i -e "s:^.*MASTER_DIRECTORY=.*\$:MASTER_DIRECTORY=${ONE_SEG_DIR}:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#MASTER_PORT=.*\$:MASTER_PORT=${MASTER_PORT}:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#MASTER_DIRECTORY=.*\$:MASTER_DIRECTORY=${ONE_SEG_DIR}:" ${CLUSTER_CONFIG_FILE}
 }
 
 function installMirror() {
@@ -93,10 +93,10 @@ function installMirror() {
       MIRROR_DIRS="${MIRROR_DIRS} ${ONE_MIR_DIR}"
     done
   fi
-  sed -i -e "s:^.*MIRROR_PORT_BASE=.*\$:MIRROR_PORT_BASE=${MIRROR_BASE_PORT}:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#MIRROR_PORT_BASE=.*\$:MIRROR_PORT_BASE=${MIRROR_BASE_PORT}:" ${CLUSTER_CONFIG_FILE}
   sed -i -e "s:^#REPLICATION_PORT_BASE=.*\$:REPLICATION_PORT_BASE=41000:" ${CLUSTER_CONFIG_FILE}
   sed -i -e "s:^#MIRROR_REPLICATION_PORT_BASE=.*\$:MIRROR_REPLICATION_PORT_BASE=51000:" ${CLUSTER_CONFIG_FILE}
-  sed -i -e "s:^.*declare -a MIRROR_DATA_DIRECTORY=.*\$:declare -a MIRROR_DATA_DIRECTORY=(${MIRROR_DIRS}):" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#declare -a MIRROR_DATA_DIRECTORY=.*\$:declare -a MIRROR_DATA_DIRECTORY=(${MIRROR_DIRS}):" ${CLUSTER_CONFIG_FILE}
 }
 
 function checkMirrorOpts() {
