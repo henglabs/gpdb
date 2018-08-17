@@ -70,7 +70,7 @@ function installMaster() {
   CLUSTER_CONFIG_FILE="${CLUSTER_DIR}/conf/config"
   ONE_SEG_DIR="${CLUSTER_DIR}/data"
   DATA_DIRS="${ONE_SEG_DIR}"
-  if [ ${SEGMENT_NUM} -ge 2 ];then
+  if [ ${SEGMENT_NUM} -gt 1 ];then
     for i in $(seq 2 ${SEGMENT_NUM});do
       DATA_DIRS="${DATA_DIRS} ${ONE_SEG_DIR}"
     done
@@ -88,7 +88,7 @@ function installMaster() {
 function installMirror() {
   ONE_MIR_DIR="${CLUSTER_DIR}/mirror"
   MIRROR_DIRS="${ONE_MIR_DIR}"
-  if [ ${SEGMENT_NUM} -ge 2 ];then
+  if [ ${SEGMENT_NUM} -gt 1 ];then
     for i in $(seq 2 ${SEGMENT_NUM});do
       MIRROR_DIRS="${MIRROR_DIRS} ${ONE_MIR_DIR}"
     done
@@ -122,7 +122,7 @@ function usage() {
     -p master port. default is ${MASTER_PORT}
     -s segment num. default is ${SEGMENT_NUM}
     -m snmp monitor address. default is ${SNMP_MONITOR_ADDRESS}
-    -f when f is "on",mirror is on,else mirror is off
+    -f mirror switch. when f is "on", mirror is on. default is off
     -r mirror base port. default is ${MIRROR_BASE_PORT}
     \033[0m
     "
