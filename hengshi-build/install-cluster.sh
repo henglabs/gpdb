@@ -9,6 +9,14 @@ SEGMENT_NUM=0
 SEGMENT_BASE_PORT=25432
 MASTER_PORT=15432
 SEGMENT_HOSTS_FILE=""
+SNMP_MONITOR_ADDRESS="127.0.0.1:1620"
+MIRROR_BASE_PORT="35432"
+MIRROR_ON_OFF="off"
+
+function paramSet() {
+  CLUSTER_PARAM_CONFIG=${CLUSTER_DIR}/conf/postgresql.conf
+  sed -i -e "s/gp_snmp_monitor_address=.*\$/gp_snmp_monitor_address='${SNMP_MONITOR_ADDRESS}'/" ${CLUSTER_PARAM_CONFIG}
+}
 
 function initEnv() {
   BIN_DIR=$(dirname $0)
@@ -62,7 +70,7 @@ function installMaster() {
   CLUSTER_CONFIG_FILE="${CLUSTER_DIR}/conf/config"
   ONE_SEG_DIR="${CLUSTER_DIR}/data"
   DATA_DIRS="${ONE_SEG_DIR}"
-  if [ ${SEGMENT_NUM} -ge 2 ];then
+  if [ ${SEGMENT_NUM} -gt 1 ];then
     for i in $(seq 2 ${SEGMENT_NUM});do
       DATA_DIRS="${DATA_DIRS} ${ONE_SEG_DIR}"
     done
@@ -70,15 +78,39 @@ function installMaster() {
   sed -i -e "s:${DEFAULT_PKG_ROOT}/gpdb/greenplum_path.sh:${PKG_ROOT}/gpdb/greenplum_path.sh:g" ${CLUSTER_EXPORT_FILE}
   sed -i -e "s:^export PGPORT=.*\$:export PGPORT=${MASTER_PORT}:" ${CLUSTER_EXPORT_FILE}
   sed -i -e "s:${DEFAULT_PKG_ROOT}/sample-cluster:${CLUSTER_DIR}:g" ${CLUSTER_EXPORT_FILE} ${CLUSTER_CONFIG_FILE}
-  sed -i -e "s:^.*declare -a DATA_DIRECTORY=.*\$:declare -a DATA_DIRECTORY=(${DATA_DIRS}):" ${CLUSTER_CONFIG_FILE}
-  sed -i -e "s:^.*MASTER_HOSTNAME=.*\$:MASTER_HOSTNAME=$(hostname):" ${CLUSTER_CONFIG_FILE}
-  sed -i -e "s:^PORT_BASE=.*\$:PORT_BASE=${SEGMENT_BASE_PORT}:" ${CLUSTER_CONFIG_FILE}
-  sed -i -e "s:^MASTER_PORT=.*\$:MASTER_PORT=${MASTER_PORT}:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#declare -a DATA_DIRECTORY=.*\$:declare -a DATA_DIRECTORY=(${DATA_DIRS}):" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#MASTER_HOSTNAME=.*\$:MASTER_HOSTNAME=$(hostname):" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#PORT_BASE=.*\$:PORT_BASE=${SEGMENT_BASE_PORT}:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#MASTER_PORT=.*\$:MASTER_PORT=${MASTER_PORT}:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#MASTER_DIRECTORY=.*\$:MASTER_DIRECTORY=${ONE_SEG_DIR}:" ${CLUSTER_CONFIG_FILE}
+}
+
+function installMirror() {
+  ONE_MIR_DIR="${CLUSTER_DIR}/mirror"
+  MIRROR_DIRS="${ONE_MIR_DIR}"
+  if [ ${SEGMENT_NUM} -gt 1 ];then
+    for i in $(seq 2 ${SEGMENT_NUM});do
+      MIRROR_DIRS="${MIRROR_DIRS} ${ONE_MIR_DIR}"
+    done
+  fi
+  sed -i -e "s:^#MIRROR_PORT_BASE=.*\$:MIRROR_PORT_BASE=${MIRROR_BASE_PORT}:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#REPLICATION_PORT_BASE=.*\$:REPLICATION_PORT_BASE=41000:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#MIRROR_REPLICATION_PORT_BASE=.*\$:MIRROR_REPLICATION_PORT_BASE=51000:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#declare -a MIRROR_DATA_DIRECTORY=.*\$:declare -a MIRROR_DATA_DIRECTORY=(${MIRROR_DIRS}):" ${CLUSTER_CONFIG_FILE}
+}
+
+function checkMirrorOpts() {
+  if [ "on" = "${MIRROR_ON_OFF}" ];then
+    installMirror
+  fi
 }
 
 function doInstall() {
   installMaster
+  checkMirrorOpts
+  paramSet
   copyBin ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR})
+  copyBin ${SEGMENT_HOSTS_FILE} ${CLUSTER_DIR}
   updateSysConfig ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR}) ${CLUSTER_DIR}/conf/limits.conf ${CLUSTER_DIR}/conf/sysctl.conf
 }
 
@@ -89,6 +121,9 @@ function usage() {
     -h file name of hosts of segments, one host in a line
     -p master port. default is ${MASTER_PORT}
     -s segment num. default is ${SEGMENT_NUM}
+    -m snmp monitor address. default is ${SNMP_MONITOR_ADDRESS}
+    -f mirror switch. when f is "on", mirror is on. default is off
+    -r mirror base port. default is ${MIRROR_BASE_PORT}
     \033[0m
     "
 }
@@ -102,7 +137,7 @@ function checkMinimalOpts() {
 
 function main() {
   initEnv
-  while getopts ":b:d:h:p:s:" opt; do
+  while getopts ":b:d:h:p:s:m:r:f:" opt; do
     case "$opt" in
       b)
         SEGMENT_BASE_PORT="${OPTARG}"
@@ -119,6 +154,15 @@ function main() {
       s)
         SEGMENT_NUM="${OPTARG}"
         ;;
+      m)
+	SNMP_MONITOR_ADDRESS="${OPTARG}"
+	;;
+      r)
+	MIRROR_BASE_PORT="${OPTARG}"
+	;;
+      f)
+	MIRROR_ON_OFF="${OPTARG}"
+	;;
       *)
         usage
         exit 1

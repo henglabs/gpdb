@@ -83,7 +83,7 @@ function build_centos7(){
     INSTALL_DIR=`pwd`/`pkg_name`
     mkdir ${INSTALL_DIR}
     mkdir ${INSTALL_DIR}/gpdb ${INSTALL_DIR}/sample-cluster
-    mkdir ${INSTALL_DIR}/sample-cluster/conf ${INSTALL_DIR}/sample-cluster/data
+    mkdir ${INSTALL_DIR}/sample-cluster/conf ${INSTALL_DIR}/sample-cluster/data ${INSTALL_DIR}/sample-cluster/mirror
     get_sys_info
     # install deps
     if ! gcc --version;then
@@ -127,7 +127,7 @@ function build_centos7(){
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${INSTALL_DIR}/gpdb/lib
     export LIBRARY_PATH=${LIBRARY_PATH}:${INSTALL_DIR}/gpdb/lib
     export CPATH=${CPATH}:${INSTALL_DIR}/gpdb/include
-    ./configure --with-perl --with-python --with-libxml --with-gssapi --prefix=${INSTALL_DIR}/gpdb
+    ./configure --enable-snmp --with-perl --with-python --with-libxml --with-gssapi --prefix=${INSTALL_DIR}/gpdb
     make -j ${CPU_NUM}
     make install
     sed -i "1 s:^.*\$:GPHOME=/home/gpadmin/`pkg_name`/gpdb:" ${INSTALL_DIR}/gpdb/greenplum_path.sh
@@ -136,6 +136,11 @@ function build_centos7(){
     copy_python_libs ${INSTALL_DIR}/gpdb/lib/python
     cat >${INSTALL_DIR}/sample-cluster/conf/hostfile <<eof
 localhost
+eof
+
+    cat >${INSTALL_DIR}/sample-cluster/conf/postgresql.conf <<eof
+# name or IP address(es) (and optionally the port) of the SNMP monitor(s) that will receive the alerts.
+gp_snmp_monitor_address=''
 eof
     cat >${INSTALL_DIR}/sample-cluster/conf/config <<eof
 # Set this to anything you like
@@ -150,22 +155,34 @@ SEG_PREFIX=SegDataDir
 
 # This is the port at which to contact the resulting Greenplum database, e.g.
 #   psql -p \$PORT_BASE -d template1
-PORT_BASE=25432
+#PORT_BASE=
 
 # Prefix for script created database
 DATABASE_PREFIX=SampleDatabase
 
 # Array of data locations for each hosts Segment Instances, the number of directories in this array will
 # set the number of segment instances per host
-declare -a DATA_DIRECTORY=(/home/gpadmin/`pkg_name`/sample-cluster/data /home/gpadmin/`pkg_name`/sample-cluster/data)
+#declare -a DATA_DIRECTORY=
 
 # Name of host on which to setup the QD
-MASTER_HOSTNAME=localhost
+#MASTER_HOSTNAME=
 
 # Name of directory on that host in which to setup the QD
-MASTER_DIRECTORY=/home/gpadmin/`pkg_name`/sample-cluster/data
+#MASTER_DIRECTORY=
 
-MASTER_PORT=15432
+#MASTER_PORT=
+
+#mirror segment port numbers
+#MIRROR_PORT_BASE=
+
+#specifies the base number by which the port numbers for the primary file replication process are calculated
+#REPLICATION_PORT_BASE=
+
+#specifies the data storage location(s) where the utility will create the mirror segment data directories
+#declare -a MIRROR_DATA_DIRECTORY=
+
+#specifies the base number by which the port numbers for the mirror file replication process are calculated
+#MIRROR_REPLICATION_PORT_BASE=
 
 # Hosts to allow to connect to the QD (and Segment Instances)
 # By default, allow everyone to connect (0.0.0.0/0)
