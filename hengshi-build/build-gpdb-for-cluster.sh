@@ -140,11 +140,7 @@ eof
 
     cat >${INSTALL_DIR}/sample-cluster/conf/postgresql.conf <<eof
 # name or IP address(es) (and optionally the port) of the SNMP monitor(s) that will receive the alerts.
-gp_snmp_monitor_address='127.0.0.1:1620'
-# Change to whatever community string you use in your monitor
-gp_snmp_community='public'
-# Set to 'inform' or 'trap', we will send SNMP v2c inform, or SNMP v2c trap.
-gp_snmp_use_inform_or_trap='trap'
+gp_snmp_monitor_address=''
 eof
     cat >${INSTALL_DIR}/sample-cluster/conf/config <<eof
 # Set this to anything you like
@@ -159,34 +155,34 @@ SEG_PREFIX=SegDataDir
 
 # This is the port at which to contact the resulting Greenplum database, e.g.
 #   psql -p \$PORT_BASE -d template1
-PORT_BASE=25432
+#PORT_BASE=
 
 # Prefix for script created database
 DATABASE_PREFIX=SampleDatabase
 
 # Array of data locations for each hosts Segment Instances, the number of directories in this array will
 # set the number of segment instances per host
-declare -a DATA_DIRECTORY=(/home/gpadmin/`pkg_name`/sample-cluster/data /home/gpadmin/`pkg_name`/sample-cluster/data)
+#declare -a DATA_DIRECTORY=
 
 # Name of host on which to setup the QD
-MASTER_HOSTNAME=localhost
+#MASTER_HOSTNAME=
 
 # Name of directory on that host in which to setup the QD
-MASTER_DIRECTORY=/home/gpadmin/`pkg_name`/sample-cluster/data
+#MASTER_DIRECTORY=
 
-MASTER_PORT=15432
+#MASTER_PORT=
 
 #mirror segment port numbers
-MIRROR_PORT_BASE=
+#MIRROR_PORT_BASE=
 
 #specifies the base number by which the port numbers for the primary file replication process are calculated
-REPLICATION_PORT_BASE=
+#REPLICATION_PORT_BASE=
 
 #specifies the data storage location(s) where the utility will create the mirror segment data directories
-declare -a MIRROR_DATA_DIRECTORY=
+#declare -a MIRROR_DATA_DIRECTORY=
 
 #specifies the base number by which the port numbers for the mirror file replication process are calculated
-MIRROR_REPLICATION_PORT_BASE=
+#MIRROR_REPLICATION_PORT_BASE=
 
 # Hosts to allow to connect to the QD (and Segment Instances)
 # By default, allow everyone to connect (0.0.0.0/0)
