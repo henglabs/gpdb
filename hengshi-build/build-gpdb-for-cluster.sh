@@ -130,7 +130,7 @@ function build_centos7(){
     ./configure --enable-snmp --with-perl --with-python --with-libxml --with-gssapi --prefix=${INSTALL_DIR}/gpdb
     make -j ${CPU_NUM}
     make install
-    GPHOME_CMD="\$( cd \"\$( dirname \"\${BASH_SOURCE[0]}\" )\" ;pwd )"
+    GPHOME_CMD="\$( cd \"\$( dirname \"\${BASH_SOURCE[0]}\" )\" >/dev/null \&\& pwd )"
     sed -i "1 s:^.*\$:GPHOME=${GPHOME_CMD}:" ${INSTALL_DIR}/gpdb/greenplum_path.sh
     cd ${BUILD_ROOT}
     cp /usr/lib64/libxerces-c.so /usr/lib64/libxerces-c-3.1.so ${INSTALL_DIR}/gpdb/lib
