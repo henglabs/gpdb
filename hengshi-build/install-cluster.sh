@@ -12,6 +12,7 @@ SEGMENT_HOSTS_FILE=""
 SNMP_MONITOR_ADDRESS="127.0.0.1:1620"
 MIRROR_BASE_PORT="35432"
 MIRROR_ON_OFF="off"
+MASTER_HOSTNAME=""
 
 function paramSet() {
   CLUSTER_PARAM_CONFIG=${CLUSTER_DIR}/conf/postgresql.conf
@@ -79,7 +80,7 @@ function installMaster() {
   sed -i -e "s:^export PGPORT=.*\$:export PGPORT=${MASTER_PORT}:" ${CLUSTER_EXPORT_FILE}
   sed -i -e "s:${DEFAULT_PKG_ROOT}/sample-cluster:${CLUSTER_DIR}:g" ${CLUSTER_EXPORT_FILE} ${CLUSTER_CONFIG_FILE}
   sed -i -e "s:^#declare -a DATA_DIRECTORY=.*\$:declare -a DATA_DIRECTORY=(${DATA_DIRS}):" ${CLUSTER_CONFIG_FILE}
-  sed -i -e "s:^#MASTER_HOSTNAME=.*\$:MASTER_HOSTNAME=$(hostname):" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#MASTER_HOSTNAME=.*\$:MASTER_HOSTNAME=${MASTER_HOSTNAME}:" ${CLUSTER_CONFIG_FILE}
   sed -i -e "s:^#PORT_BASE=.*\$:PORT_BASE=${SEGMENT_BASE_PORT}:" ${CLUSTER_CONFIG_FILE}
   sed -i -e "s:^#MASTER_PORT=.*\$:MASTER_PORT=${MASTER_PORT}:" ${CLUSTER_CONFIG_FILE}
   sed -i -e "s:^#MASTER_DIRECTORY=.*\$:MASTER_DIRECTORY=${ONE_SEG_DIR}:" ${CLUSTER_CONFIG_FILE}
@@ -122,6 +123,7 @@ function usage() {
     -p master port. default is ${MASTER_PORT}
     -s segment num. default is ${SEGMENT_NUM}
     -m snmp monitor address. default is ${SNMP_MONITOR_ADDRESS}
+    -M master hostname.can not be null.
     -f mirror switch. when f is "on", mirror is on. default is off
     -r mirror base port. default is ${MIRROR_BASE_PORT}
     \033[0m
@@ -129,7 +131,7 @@ function usage() {
 }
 
 function checkMinimalOpts() {
-  if [ -z "${SEGMENT_HOSTS_FILE}" ];then
+  if [ -z "${SEGMENT_HOSTS_FILE}" ] || [ -z "${MASTER_HOSTNAME}" ];then
     usage
     exit 1
   fi
@@ -137,7 +139,7 @@ function checkMinimalOpts() {
 
 function main() {
   initEnv
-  while getopts ":b:d:h:p:s:m:r:f:" opt; do
+  while getopts ":b:d:h:p:s:m:r:f:M:" opt; do
     case "$opt" in
       b)
         SEGMENT_BASE_PORT="${OPTARG}"
@@ -156,6 +158,9 @@ function main() {
         ;;
       m)
 	SNMP_MONITOR_ADDRESS="${OPTARG}"
+	;;
+      M)
+	MASTER_HOSTNAME="${OPTARG}"
 	;;
       r)
 	MIRROR_BASE_PORT="${OPTARG}"
