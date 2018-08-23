@@ -123,7 +123,7 @@ function usage() {
     -p master port. default is ${MASTER_PORT}
     -s segment num. default is ${SEGMENT_NUM}
     -m snmp monitor address. default is ${SNMP_MONITOR_ADDRESS}
-    -M master hostname.default is localhost.
+    -M master hostname. default is localhost.
     -f mirror switch. when f is "on", mirror is on. default is off
     -r mirror base port. default is ${MIRROR_BASE_PORT}
     \033[0m
