@@ -12,7 +12,7 @@ SEGMENT_HOSTS_FILE=""
 SNMP_MONITOR_ADDRESS="127.0.0.1:1620"
 MIRROR_BASE_PORT="35432"
 MIRROR_ON_OFF="off"
-MASTER_HOSTNAME=""
+MASTER_HOSTNAME="$(hostname)"
 
 function paramSet() {
   CLUSTER_PARAM_CONFIG=${CLUSTER_DIR}/conf/postgresql.conf
@@ -123,7 +123,7 @@ function usage() {
     -p master port. default is ${MASTER_PORT}
     -s segment num. default is ${SEGMENT_NUM}
     -m snmp monitor address. default is ${SNMP_MONITOR_ADDRESS}
-    -M master hostname.can not be null.
+    -M master hostname.default is localhost.
     -f mirror switch. when f is "on", mirror is on. default is off
     -r mirror base port. default is ${MIRROR_BASE_PORT}
     \033[0m
@@ -131,7 +131,7 @@ function usage() {
 }
 
 function checkMinimalOpts() {
-  if [ -z "${SEGMENT_HOSTS_FILE}" ] || [ -z "${MASTER_HOSTNAME}" ];then
+  if [ -z "${SEGMENT_HOSTS_FILE}" ];then
     usage
     exit 1
   fi
