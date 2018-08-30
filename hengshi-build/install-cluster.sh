@@ -10,7 +10,9 @@ SEGMENT_BASE_PORT=25432
 MASTER_PORT=15432
 SEGMENT_HOSTS_FILE=""
 SNMP_MONITOR_ADDRESS="127.0.0.1:1620"
-MIRROR_BASE_PORT="35432"
+MIRROR_BASE_PORT=35432
+REPLICATION_PORT_BASE=26432
+MIRROR_REPLICATION_PORT_BASE=36432
 MIRROR_ON_OFF="off"
 MASTER_HOSTNAME="$(hostname)"
 
@@ -95,8 +97,8 @@ function installMirror() {
     done
   fi
   sed -i -e "s:^#MIRROR_PORT_BASE=.*\$:MIRROR_PORT_BASE=${MIRROR_BASE_PORT}:" ${CLUSTER_CONFIG_FILE}
-  sed -i -e "s:^#REPLICATION_PORT_BASE=.*\$:REPLICATION_PORT_BASE=41000:" ${CLUSTER_CONFIG_FILE}
-  sed -i -e "s:^#MIRROR_REPLICATION_PORT_BASE=.*\$:MIRROR_REPLICATION_PORT_BASE=51000:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#REPLICATION_PORT_BASE=.*\$:REPLICATION_PORT_BASE=${REPLICATION_PORT_BASE}:" ${CLUSTER_CONFIG_FILE}
+  sed -i -e "s:^#MIRROR_REPLICATION_PORT_BASE=.*\$:MIRROR_REPLICATION_PORT_BASE=${MIRROR_REPLICATION_PORT_BASE}:" ${CLUSTER_CONFIG_FILE}
   sed -i -e "s:^#declare -a MIRROR_DATA_DIRECTORY=.*\$:declare -a MIRROR_DATA_DIRECTORY=(${MIRROR_DIRS}):" ${CLUSTER_CONFIG_FILE}
 }
 
@@ -143,6 +145,7 @@ function main() {
     case "$opt" in
       b)
         SEGMENT_BASE_PORT="${OPTARG}"
+        REPLICATION_PORT_BASE=`expr ${SEGMENT_BASE_PORT} + 1000`
         ;;
       d)
         CLUSTER_DIR="${OPTARG}"
@@ -163,7 +166,8 @@ function main() {
 	MASTER_HOSTNAME="${OPTARG}"
 	;;
       r)
-	MIRROR_BASE_PORT="${OPTARG}"
+        MIRROR_BASE_PORT="${OPTARG}"
+        MIRROR_REPLICATION_PORT_BASE=`expr ${MIRROR_BASE_PORT} + 1000`
 	;;
       f)
 	MIRROR_ON_OFF="${OPTARG}"
@@ -177,14 +181,19 @@ function main() {
 
   checkMinimalOpts
 
-  echo -e "\033[32m ----------------------\033[0m"
-  echo -e "\033[32m BIN_DIR:              \033[0m" ${BIN_DIR}
-  echo -e "\033[32m SEGMENT_BASE_PORT:    \033[0m" ${SEGMENT_BASE_PORT}
-  echo -e "\033[32m CLUSTER_DIR:          \033[0m" ${CLUSTER_DIR}
-  echo -e "\033[32m SEGMENT_HOSTS_FILE:   \033[0m" ${SEGMENT_HOSTS_FILE}
-  echo -e "\033[32m MASTER_PORT:          \033[0m" ${MASTER_PORT}
-  echo -e "\033[32m SEGMENT_NUM:          \033[0m" ${SEGMENT_NUM}
-  echo -e "\033[32m ----------------------\033[0m"
+  echo -e "\033[32m ----------------------------------\033[0m"
+  echo -e "\033[32m MASTER_HOSTNAME:                  \033[0m" ${MASTER_HOSTNAME}
+  echo -e "\033[32m BIN_DIR:                          \033[0m" ${BIN_DIR}
+  echo -e "\033[32m SEGMENT_BASE_PORT:                \033[0m" ${SEGMENT_BASE_PORT}
+  echo -e "\033[32m CLUSTER_DIR:                      \033[0m" ${CLUSTER_DIR}
+  echo -e "\033[32m SEGMENT_HOSTS_FILE:               \033[0m" ${SEGMENT_HOSTS_FILE}
+  echo -e "\033[32m MASTER_PORT:                      \033[0m" ${MASTER_PORT}
+  echo -e "\033[32m SEGMENT_NUM:                      \033[0m" ${SEGMENT_NUM}
+  echo -e "\033[32m MIRROR_ON_OFF:                    \033[0m" ${MIRROR_ON_OFF}
+  echo -e "\033[32m MIRROR_BASE_PORT:                 \033[0m" ${MIRROR_BASE_PORT}
+  echo -e "\033[32m REPLICATION_PORT_BASE:            \033[0m" ${REPLICATION_PORT_BASE}
+  echo -e "\033[32m MIRROR_REPLICATION_PORT_BASE:     \033[0m" ${MIRROR_REPLICATION_PORT_BASE}
+  echo -e "\033[32m ----------------------------------\033[0m"
   echo
 
   updatePkg
