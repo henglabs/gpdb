@@ -7,6 +7,7 @@ BIN_DIR=""
 CLUSTER_DIR=""
 SEGMENT_HOSTS_FILE=""
 NEW_SEGMENT_HOSTS_FILE=""
+DO_REBALANCE=""
 
 function initEnv() {
   BIN_DIR=$(dirname $0)
@@ -57,6 +58,9 @@ function doExpand() {
   EXPAND_INPUTFILE=`ls -tr gpexpand_inputfile_*|tail -n 1`
   echo "EXPAND_INPUTFILE: ${EXPAND_INPUTFILE}"
   gpexpand -i ${EXPAND_INPUTFILE} -D ${EXPAND_DB}
+}
+
+function cleanExpandMsg() {
   gpexpand -c -D ${EXPAND_DB}
   psql postgres -c "DROP DATABASE IF EXISTS ${EXPAND_DB}"
 }
@@ -66,12 +70,13 @@ function usage() {
     -d dir of cluster.
     -h file name of hosts of segments, one host in a line
     -n file name of new hosts of segments, one host in a line
+    -b if you want to rebalance data afterwards, please set it 'y', else set 'n'
     \033[0m
     "
 }
 
 function checkMinimalOpts() {
-  if [ -z "${CLUSTER_DIR}" ] || [ -z "${SEGMENT_HOSTS_FILE}" ] || [ -z "${NEW_SEGMENT_HOSTS_FILE}" ];then
+  if [ -z "${CLUSTER_DIR}" ] || [ -z "${SEGMENT_HOSTS_FILE}" ] || [ -z "${NEW_SEGMENT_HOSTS_FILE}" ] || [ -z "${DO_REBALANCE}" ];then
     usage
     exit 1
   fi
@@ -79,7 +84,7 @@ function checkMinimalOpts() {
 
 function main() {
   initEnv
-  while getopts ":d:h:n:" opt; do
+  while getopts ":d:h:n:b:" opt; do
     case "$opt" in
       d)
         CLUSTER_DIR="${OPTARG}"
@@ -90,6 +95,9 @@ function main() {
       n)
         NEW_SEGMENT_HOSTS_FILE="${OPTARG}"
         ;;
+      b)
+	DO_REBALANCE="${OPTARG}"
+	;;
       *)
         usage
         exit 1
@@ -111,6 +119,10 @@ function main() {
   source "${BIN_DIR}/../greenplum_path.sh"
   doCheck
   doExpand
+  if [[ "y" != "${DO_REBALANCE}" ]];then
+    echo "clean the expand message..."
+    cleanExpandMsg  
+  fi
 
 }
 
