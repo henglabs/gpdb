@@ -276,6 +276,7 @@ static void dump_var(const char *str, NumericVar *var);
 static void alloc_var(NumericVar *var, int ndigits);
 static void zero_var(NumericVar *var);
 
+static bool safe_init_var_from_str(const char *str, NumericVar *dest);
 static void init_var_from_str(const char *str, NumericVar *dest);
 static void set_var_from_var(NumericVar *value, NumericVar *dest);
 static void init_var_from_var(NumericVar *value, NumericVar *dest);
@@ -350,6 +351,39 @@ static ArrayType *do_numeric_amalg_demalg(ArrayType *aTransArray,
  *
  * ----------------------------------------------------------------------
  */
+
+
+/*
+ * safe_to_number() -
+ *
+ *	Safe convert text to numeric
+ */
+Datum
+safe_to_number(PG_FUNCTION_ARGS)
+{
+	text	*t = PG_GETARG_TEXT_P(0);
+	char	   *str = text_to_cstring(t);
+
+	NumericVar	value;
+	Numeric		res;
+
+	/*
+	 * Check for NaN
+	 */
+	if (pg_strcasecmp(str, "NaN") == 0)
+		PG_RETURN_NUMERIC(make_result(&const_nan));
+
+	/*
+	 * Use init_var_from_str() to parse the input string and return it in the
+	 * packed DB storage format
+	 */
+	if(!safe_init_var_from_str(str, &value))
+		PG_RETURN_NULL();
+
+	res = make_result(&value);
+
+	PG_RETURN_NUMERIC(res);
+}
 
 
 /*
@@ -3493,6 +3527,168 @@ zero_var(NumericVar *var)
 	var->ndigits = 0;
 	var->weight = 0;			/* by convention; doesn't really matter */
 	var->sign = NUMERIC_POS;	/* anything but NAN... */
+}
+
+
+/*
+ * safe_init_var_from_str()
+ *
+ *	Parse a string and put the number into a variable
+ *
+ */
+static bool
+safe_init_var_from_str(const char *str, NumericVar *dest)
+{
+	const char *cp = str;
+	bool		have_dp = FALSE;
+	int			i;
+	unsigned char *decdigits;
+	int			sign = NUMERIC_POS;
+	int			dweight = -1;
+	int			ddigits;
+	int			dscale = 0;
+	int			weight;
+	int			ndigits;
+	int			offset;
+	NumericDigit *digits;
+	unsigned char tdd[NUMERIC_LOCAL_DTXT];
+
+	/*
+	 * We first parse the string to extract decimal digits and determine the
+	 * correct decimal weight.	Then convert to NBASE representation.
+	 */
+
+	/* skip leading spaces */
+	while (*cp)
+	{
+		if (!isspace((unsigned char) *cp))
+			break;
+		cp++;
+	}
+
+	switch (*cp)
+	{
+		case '+':		/* NUMERIC_POS default set up above */
+			cp++;
+			break;
+
+		case '-':
+			sign = NUMERIC_NEG;
+			cp++;
+			break;
+	}
+
+	if (*cp == '.')
+	{
+		have_dp = TRUE;
+		cp++;
+	}
+
+	if (!isdigit((unsigned char) *cp))
+		return false;
+
+	decdigits = tdd;
+	i = strlen(cp) + DEC_DIGITS * 2;
+	if ( i > NUMERIC_LOCAL_DMAX)
+		decdigits = (unsigned char *) palloc(i);
+
+	/* leading padding for digit alignment later */
+	memset(decdigits, 0, DEC_DIGITS);
+	i = DEC_DIGITS;
+
+	while (*cp)
+	{
+		if (isdigit((unsigned char) *cp))
+		{
+			decdigits[i++] = *cp++ - '0';
+			if (!have_dp)
+				dweight++;
+			else
+				dscale++;
+		}
+		else if (*cp == '.')
+		{
+			if (have_dp)
+				return false;
+			have_dp = TRUE;
+			cp++;
+		}
+		else
+			break;
+	}
+
+	ddigits = i - DEC_DIGITS;
+	/* trailing padding for digit alignment later */
+	memset(decdigits + i, 0, DEC_DIGITS - 1);
+
+	/* Handle exponent, if any */
+	if (*cp == 'e' || *cp == 'E')
+	{
+		long		exponent;
+		char	   *endptr;
+
+		cp++;
+		exponent = strtol(cp, &endptr, 10);
+		if (endptr == cp)
+			return false;
+		cp = endptr;
+		if (exponent > NUMERIC_MAX_PRECISION ||
+			exponent < -NUMERIC_MAX_PRECISION)
+			return false;
+		dweight += (int) exponent;
+		dscale -= (int) exponent;
+		if (dscale < 0)
+			dscale = 0;
+	}
+
+	/* Should be nothing left but spaces */
+	while (*cp)
+	{
+		if (!isspace((unsigned char) *cp))
+			return false;
+		cp++;
+	}
+
+	/*
+	 * Okay, convert pure-decimal representation to base NBASE.  First we need
+	 * to determine the converted weight and ndigits.  offset is the number of
+	 * decimal zeroes to insert before the first given digit to have a
+	 * correctly aligned first NBASE digit.
+	 */
+	if (dweight >= 0)
+		weight = (dweight + 1 + DEC_DIGITS - 1) / DEC_DIGITS - 1;
+	else
+		weight = -((-dweight - 1) / DEC_DIGITS + 1);
+	offset = (weight + 1) * DEC_DIGITS - (dweight + 1);
+	ndigits = (ddigits + offset + DEC_DIGITS - 1) / DEC_DIGITS;
+
+	init_alloc_var(dest, ndigits);
+
+	dest->weight = weight;
+	dest->sign = sign;
+	dest->dscale = dscale;
+
+	i = DEC_DIGITS - offset;
+	digits = dest->digits;
+
+	while (ndigits-- > 0)
+	{
+#if DEC_DIGITS == 4
+		*digits++ = ((decdigits[i] * 10 + decdigits[i + 1]) * 10 +
+					 decdigits[i + 2]) * 10 + decdigits[i + 3];
+#elif DEC_DIGITS == 2
+		*digits++ = decdigits[i] * 10 + decdigits[i + 1];
+#elif DEC_DIGITS == 1
+		*digits++ = decdigits[i];
+#else
+#error unsupported NBASE
+#endif
+		i += DEC_DIGITS;
+	}
+
+	if (decdigits != tdd)
+		pfree(decdigits);
+	return true;
 }
 
 
