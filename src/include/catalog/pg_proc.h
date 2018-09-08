@@ -2565,6 +2565,8 @@ DESCR("hash");
 
 
 /* OID's 1700 - 1799 NUMERIC data type */
+DATA(insert OID = 2700 ( safe_to_number                      PGNSP PGUID 12 1 0 f f t f s 1  1700 "25" _null_ _null_ _null_  safe_to_number - _null_ _null_ ));
+DESCR("safe convert text to numeric");
 DATA(insert OID = 1701 ( numeric_in				PGNSP PGUID 12 1 0 f f t f i 3 1700 "2275 26 23" _null_ _null_ _null_  numeric_in - _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 1702 ( numeric_out			PGNSP PGUID 12 1 0 f f t f i 1 2275 "1700" _null_ _null_ _null_ numeric_out - _null_ _null_ ));
