@@ -52,6 +52,7 @@ function doExpand() {
   while read line || [ -n "$line" ];do
     if [ -n "${line}" ];then
       ssh $line "if ! [ -d ${CLUSTER_DIR}/data ];then mkdir -p ${CLUSTER_DIR}/data;fi" </dev/null
+      ssh $line "if ! [ -d ${CLUSTER_DIR}/mirror ];then mkdir -p ${CLUSTER_DIR}/mirror;fi" </dev/null
     fi
   done<${NEW_SEGMENT_HOSTS_FILE}
   gpexpand -f ${NEW_SEGMENT_HOSTS_FILE} -D ${EXPAND_DB}
