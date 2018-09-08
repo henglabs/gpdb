@@ -119,7 +119,7 @@ function main() {
   source "${BIN_DIR}/../greenplum_path.sh"
   doCheck
   doExpand
-  if [[ "n" = "${DO_REBALANCE}" ]];then
+  if [[ "y" != "${DO_REBALANCE}" ]];then
     echo "clean the expand message..."
     cleanExpandMsg  
   fi
