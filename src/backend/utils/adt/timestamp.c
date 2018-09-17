@@ -1934,6 +1934,13 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 	if (tzp != NULL)
 		*result = dt2local(*result, -(*tzp));
 
+	/* final range check catches just-out-of-range timestamps */
+	if (!IS_VALID_TIMESTAMP(*result))
+	{
+		*result = 0;/* keep compiler quiet */
+		return -1;
+	}
+
 	return 0;
 }
 

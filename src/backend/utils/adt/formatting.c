@@ -3317,6 +3317,10 @@ to_date(PG_FUNCTION_ARGS)
 
 	result = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - POSTGRES_EPOCH_JDATE;
 
+	/* Now check for just-out-of-range dates */
+	if (!IS_VALID_DATE(result))
+	        PG_RETURN_NULL();
+
 	PG_RETURN_DATEADT(result);
 }
 
