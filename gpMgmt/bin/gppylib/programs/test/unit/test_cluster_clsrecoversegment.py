@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 from gparray import GpDB, GpArray, FAULT_STRATEGY_NONE
 from gppylib import gparray

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 class HostType:
     GPCHECK_HOSTTYPE_UNDEFINED  = 0

@@ -580,7 +580,7 @@ for h in sorted(hl,cmp=standard_host_cmp):
         print h,
 END_PYTHON_CODE
 
-	MACHINE_LIST=(`$CAT $MACHINE_LIST_FILE|python -c "$HOSTNAME_SORTER"`)
+	MACHINE_LIST=(`$CAT $MACHINE_LIST_FILE|python2 -c "$HOSTNAME_SORTER"`)
 	M_HOST_ARRAY=()
 	MCOUNT=0
 	for MHOST in ${MACHINE_LIST[@]}

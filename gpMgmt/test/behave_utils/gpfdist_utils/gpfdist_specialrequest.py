@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # This script will send whatever request body to gpfdist to test
 # gpfdist stability.
