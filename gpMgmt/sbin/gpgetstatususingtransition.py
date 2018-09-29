@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 # Copyright (c) Greenplum Inc 2010. All Rights Reserved. 
 #

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 # Recovers Greenplum segment instances that are marked as invalid, if
 # mirroring is configured and operational
