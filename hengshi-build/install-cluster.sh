@@ -15,6 +15,7 @@ REPLICATION_PORT_BASE=26432
 MIRROR_REPLICATION_PORT_BASE=36432
 MIRROR_ON_OFF="off"
 MASTER_HOSTNAME="$(hostname)"
+INITMODE="false"
 
 function paramSet() {
   CLUSTER_PARAM_CONFIG=${CLUSTER_DIR}/conf/postgresql.conf
@@ -114,11 +115,12 @@ function doInstall() {
   paramSet
   copyBin ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR})
   copyBin ${SEGMENT_HOSTS_FILE} ${CLUSTER_DIR}
-  updateSysConfig ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR}) ${CLUSTER_DIR}/conf/limits.conf ${CLUSTER_DIR}/conf/sysctl.conf
+  # updateSysConfig ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR}) ${CLUSTER_DIR}/conf/limits.conf ${CLUSTER_DIR}/conf/sysctl.conf
 }
 
 function usage() {
     echo -e "\033[32m $0 [OPTIONS]
+    -i init os env
     -b base port of segment. default is ${SEGMENT_BASE_PORT}
     -d dir of cluster. default is ${CLUSTER_DIR}
     -h file name of hosts of segments, one host in a line
@@ -141,8 +143,11 @@ function checkMinimalOpts() {
 
 function main() {
   initEnv
-  while getopts ":b:d:h:p:s:m:r:f:M:" opt; do
+  while getopts ":b:d:h:p:s:m:r:f:M:i" opt; do
     case "$opt" in
+      i)
+        INITMODE="true"
+        ;;
       b)
         SEGMENT_BASE_PORT="${OPTARG}"
         REPLICATION_PORT_BASE=`expr ${SEGMENT_BASE_PORT} + 1000`
@@ -182,6 +187,7 @@ function main() {
   checkMinimalOpts
 
   echo -e "\033[32m ----------------------------------\033[0m"
+  echo -e "\033[32m INIT MODE:                        \033[0m" ${INITMODE}
   echo -e "\033[32m MASTER_HOSTNAME:                  \033[0m" ${MASTER_HOSTNAME}
   echo -e "\033[32m BIN_DIR:                          \033[0m" ${BIN_DIR}
   echo -e "\033[32m SEGMENT_BASE_PORT:                \033[0m" ${SEGMENT_BASE_PORT}
@@ -203,8 +209,13 @@ function main() {
     mkdir -p ${CLUSTER_DIR}
   fi
   CLUSTER_DIR=$(cd ${CLUSTER_DIR};pwd)
-  doInstall
 
+  if [ "true" = "${INITMODE}" ];then
+      checkSudoPermission ${SEGMENT_HOSTS_FILE}
+      updateSysConfig ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR}) ${CLUSTER_DIR}/conf/limits.conf ${CLUSTER_DIR}/conf/sysctl.conf
+      exit 0
+  fi
+  doInstall
 }
 
 # ===== main =====

@@ -1,4 +1,24 @@
 HS_PREFIX="zzzz-hengshi-"
+function checkSudoPermission() {
+    local file=$1
+    if [ $# -ne 1 ];then
+        echo "$0 file"
+        return 1
+    fi
+    if [ -z "${file}" ] || ! [ -f "${file}" ];then
+        echo "host file error!"
+        return 1
+    fi
+    while read line || [ -n "$line" ];do
+        if [ -n "${line}" ];then
+            # check sudo permission
+            if ! ssh $line "sudo echo OK" </dev/null;then
+              echo "${line} has no sudo permission!"
+              return 1
+            fi
+        fi
+    done<${file}
+}
 function checkEnvAndPermission() {
   local file=$1
   if [ $# -ne 1 ];then
@@ -21,13 +41,8 @@ function checkEnvAndPermission() {
       return 1
     fi
   done
-  while read line || [ -n "$line" ];do
+  while read line || [ -n "$line" ];do #防止最后一行无换行符时漏读
     if [ -n "${line}" ];then
-      # check sudo permission
-      if ! ssh $line "sudo echo OK" </dev/null;then
-        echo "${line} has no sudo permission!"
-        return 1
-      fi
       # rsync check
       hasRsync=`ssh $line "if rsync --version >/dev/null 2>&1;then echo true;else echo false;fi" </dev/null`
       if [ "${hasRsync}" == "false" ];then
