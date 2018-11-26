@@ -115,7 +115,6 @@ function doInstall() {
   paramSet
   copyBin ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR})
   copyBin ${SEGMENT_HOSTS_FILE} ${CLUSTER_DIR}
-  # updateSysConfig ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR}) ${CLUSTER_DIR}/conf/limits.conf ${CLUSTER_DIR}/conf/sysctl.conf
 }
 
 function usage() {
@@ -179,6 +178,7 @@ function main() {
 	;;
       *)
         usage
+        echo "unknown opt: ${OPTARG}"
         exit 1
         ;;
     esac
