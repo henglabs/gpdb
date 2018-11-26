@@ -212,7 +212,8 @@ function main() {
 
   if [ "true" = "${INITMODE}" ];then
       checkSudoPermission ${SEGMENT_HOSTS_FILE}
-      updateSysConfig ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR}) ${CLUSTER_DIR}/conf/limits.conf ${CLUSTER_DIR}/conf/sysctl.conf
+      local sample_dir="${BIN_DIR}/../../sample-cluster"
+      updateSysConfig ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR}) ${sample_dir}/conf/limits.conf ${sample_dir}/conf/sysctl.conf
       exit 0
   fi
   doInstall
