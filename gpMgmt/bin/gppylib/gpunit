@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python2
 
 """
 gpunit is similar to unit2 in python but runs with our GpMgmtTestRunner and GpMgmtTextTestResult.

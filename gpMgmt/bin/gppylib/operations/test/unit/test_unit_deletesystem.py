@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import unittest
 from gppylib.operations.deletesystem import validate_pgport
