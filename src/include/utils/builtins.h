@@ -893,6 +893,7 @@ extern Datum macaddr_trunc(PG_FUNCTION_ARGS);
 extern Datum hashmacaddr(PG_FUNCTION_ARGS);
 
 /* numeric.c */
+extern Datum safe_to_number(PG_FUNCTION_ARGS);
 extern Datum numeric_in(PG_FUNCTION_ARGS);
 extern Datum numeric_out(PG_FUNCTION_ARGS);
 extern Datum numeric_recv(PG_FUNCTION_ARGS);
