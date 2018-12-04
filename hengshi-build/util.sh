@@ -1,4 +1,6 @@
 HS_PREFIX="zzzz-hengshi-"
+GREENPLUM_DEPS=(rsync net-tools net-snmp)
+
 function checkSudoPermission() {
     local file=$1
     if [ $# -ne 1 ];then
@@ -79,6 +81,13 @@ function copyBin() {
   done<${file}
 }
 
+function installSysDeps() {
+  local file=$1
+  while read line || [ -n "$line" ];do
+      ssh $line "sudo yum install -y ${GREENPLUM_DEPS[@]}" </dev/null
+  done<${file}
+}
+
 function updateSysConfig() {
   local file=$1
   local binRootDir=$2
@@ -106,11 +115,14 @@ function updateSysConfig() {
   fi
   while read line || [ -n "$line" ];do
     if [ -n "${line}" ];then
-      rsync -avrzP -e ssh ${limitsConf} $line:${binRootDir}/limits.conf
-      rsync -avrzP -e ssh ${sysctlConf} $line:${binRootDir}/sysctl.conf
+      tmpLimitsConf=/tmp/${HS_PREFIX}limits.conf
+      tmpSysctlConf=/tmp/${HS_PREFIX}sysctl.conf
+      rsync -avrzP -e ssh ${limitsConf} $line:${tmpLimitsConf}
+      rsync -avrzP -e ssh ${sysctlConf} $line:${tmpSysctlConf}
       remoteLimitsConf="/etc/security/limits.d/${HS_PREFIX}limits.conf"
       remoteSysctlConf="/etc/sysctl.d/${HS_PREFIX}sysctl.conf"
-      ssh $line "if [ -f ${remoteLimitsConf} ];then cp ${remoteLimitsConf} ${binRootDir}/limits.conf.bk.`date +%s`; fi;if [ -f ${remoteSysctlConf} ];then cp ${remoteSysctlConf} ${binRootDir}/sysctl.conf.bk.`date +%s`; fi;sudo cp ${binRootDir}/limits.conf ${remoteLimitsConf};sudo cp ${binRootDir}/sysctl.conf ${remoteSysctlConf};sudo sysctl --system" </dev/null
+      sysbak=sysbak
+      ssh $line "mkdir ~/${sysbak}; if [ -f ${remoteLimitsConf} ];then cp ${remoteLimitsConf} ~${sysbak}/limits.conf.bk.`date +%s`; fi;if [ -f ${remoteSysctlConf} ];then cp ${remoteSysctlConf} ~${sysbak}/sysctl.conf.bk.`date +%s`; fi;sudo mv ${tmpLimitsConf} ${remoteLimitsConf};sudo mv ${tmpSysctlConf} ${remoteSysctlConf};sudo sysctl --system" </dev/null
     fi
   done<${file}
 }
