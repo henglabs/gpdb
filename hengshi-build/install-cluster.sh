@@ -202,6 +202,13 @@ function main() {
   echo -e "\033[32m ----------------------------------\033[0m"
   echo
 
+  if [ "true" = "${INITMODE}" ];then
+      checkSudoPermission ${SEGMENT_HOSTS_FILE}
+      local sample_dir="${BIN_DIR}/../../sample-cluster"
+      updateSysConfig ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR}) ${sample_dir}/conf/limits.conf ${sample_dir}/conf/sysctl.conf
+      installSysDeps ${SEGMENT_HOSTS_FILE}
+      exit 0
+  fi
   updatePkg
   source "${BIN_DIR}/../greenplum_path.sh"
   doCheck
@@ -209,13 +216,6 @@ function main() {
     mkdir -p ${CLUSTER_DIR}
   fi
   CLUSTER_DIR=$(cd ${CLUSTER_DIR};pwd)
-
-  if [ "true" = "${INITMODE}" ];then
-      checkSudoPermission ${SEGMENT_HOSTS_FILE}
-      local sample_dir="${BIN_DIR}/../../sample-cluster"
-      updateSysConfig ${SEGMENT_HOSTS_FILE} $(dirname ${BIN_DIR}) ${sample_dir}/conf/limits.conf ${sample_dir}/conf/sysctl.conf
-      exit 0
-  fi
   doInstall
 }
 
