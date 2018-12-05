@@ -113,16 +113,16 @@ function updateSysConfig() {
     echo "sysctlConf file error!"
     return 1
   fi
+  local tmpLimitsConf=/tmp/${HS_PREFIX}limits.conf
+  local tmpSysctlConf=/tmp/${HS_PREFIX}sysctl.conf
+  rsync -avrzP -e ssh ${limitsConf} $line:${tmpLimitsConf}
+  rsync -avrzP -e ssh ${sysctlConf} $line:${tmpSysctlConf}
+  local remoteLimitsConf="/etc/security/limits.d/${HS_PREFIX}limits.conf"
+  local remoteSysctlConf="/etc/sysctl.d/${HS_PREFIX}sysctl.conf"
+  local sysbak="~/sysbak"
   while read line || [ -n "$line" ];do
     if [ -n "${line}" ];then
-      tmpLimitsConf=/tmp/${HS_PREFIX}limits.conf
-      tmpSysctlConf=/tmp/${HS_PREFIX}sysctl.conf
-      rsync -avrzP -e ssh ${limitsConf} $line:${tmpLimitsConf}
-      rsync -avrzP -e ssh ${sysctlConf} $line:${tmpSysctlConf}
-      remoteLimitsConf="/etc/security/limits.d/${HS_PREFIX}limits.conf"
-      remoteSysctlConf="/etc/sysctl.d/${HS_PREFIX}sysctl.conf"
-      sysbak=sysbak
-      ssh $line "mkdir ~/${sysbak}; if [ -f ${remoteLimitsConf} ];then cp ${remoteLimitsConf} ~${sysbak}/limits.conf.bk.`date +%s`; fi;if [ -f ${remoteSysctlConf} ];then cp ${remoteSysctlConf} ~${sysbak}/sysctl.conf.bk.`date +%s`; fi;sudo mv ${tmpLimitsConf} ${remoteLimitsConf};sudo mv ${tmpSysctlConf} ${remoteSysctlConf};sudo sysctl --system" </dev/null
+      ssh $line "mkdir -p ${sysbak}; if [ -f ${remoteLimitsConf} ];then cp ${remoteLimitsConf} ${sysbak}/limits.conf.bk.`date +%s`; fi;if [ -f ${remoteSysctlConf} ];then cp ${remoteSysctlConf} ${sysbak}/sysctl.conf.bk.`date +%s`; fi;sudo mv ${tmpLimitsConf} ${remoteLimitsConf};sudo mv ${tmpSysctlConf} ${remoteSysctlConf};sudo sysctl --system" </dev/null
     fi
   done<${file}
 }
