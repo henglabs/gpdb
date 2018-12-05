@@ -1,6 +1,6 @@
 set -e
 if [ $# -ne 1 ];then
-    echo "bash $0 tagname(like 5.3.0.2)"
+    echo "bash $0 tagname(like 5.13.0.2)"
     exit 1
 fi
 TAG="$1"
@@ -16,4 +16,4 @@ git tag ${TAG}
 git push origin ${TAG}
 git checkout ${TAG}
 git branch -d ${TMP_BRANCH}
-git checkout hs-5.3.0-master
+git checkout hs-5.13.0-master
