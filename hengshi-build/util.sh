@@ -145,15 +145,20 @@ function checkHostSysConfig() {
   # if [ "${sem}" != "250 2018500 100 8074" ];then
   if [ $semmsl -lt 250 ] || [ $semmns -lt 2018500 ] || [ $semopm -lt 100 ] || [ $semmni -lt 8074 ]; then
     echo "kernel.sem is not set properly, please check it manually in /etc/sysctl.conf and /etc/sysctl.d/*.conf"
+    echo "current sem: ${sem}, at least should be: '250 2018500 100 8074'"
     return 1
   fi
   # check limits
-  if [ `getNoFileLimit` -lt 65536 ];then
+  local num_file_limit=$(getNoFileLimit)
+  if [ $num_file_limit -lt 65536 ];then
     echo "open files limit is not set properly, please check it manually in /etc/security/limits.conf and /etc/security/limits.d/*.conf"
+    echo "current file num limit: $num_file_limit, at least should be: 65536"
     return 1
   fi
-  if [ `getNProcLimit` -lt 131072 ];then
+  local num_proc_limit=$(getNProcLimit)
+  if [ $num_proc_limit -lt 131072 ];then
     echo "max user processes is not set properly, please check it manually in /etc/security/limits.conf and /etc/security/limits.d/*.conf"
+    echo "current process num limit: num_proc_limit, at least should be: 131072"
     return 1
   fi
 }
